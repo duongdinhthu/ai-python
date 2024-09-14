@@ -1,0 +1,7 @@
+myenv\Scripts\activate
+python -m venv myenv
+nvcc --version
+pip install opencv-python
+myenv\Scripts\activate
+python app_yolo.py
+pip freeze > requirements.txt

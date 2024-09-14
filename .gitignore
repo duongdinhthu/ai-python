@@ -1,0 +1,16 @@
+# Ignore virtual environments
+myenv/
+venv/
+.venv/
+
+
+
+# Ignore model files
+*.keras
+*.h5
+
+# Ignore other heavy files or folders
+logs/
+checkpoints/
+
+*.pt
