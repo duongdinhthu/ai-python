@@ -13,23 +13,46 @@ import albumentations as A
 import json
 from collections import Counter
 from datetime import datetime
+import requests
 
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+# Thông tin từ Azure Blob Storage (thay thế bằng SAS URL của bạn)
+keras_model_url = "https://assetprojectai.blob.core.windows.net/private/disease_diagnosis_model_final.keras?sp=r&st=2024-09-14T08:24:23Z&se=2025-01-11T16:24:23Z&spr=https&sv=2022-11-02&sr=b&sig=Fn3WKJrQvpLMpjQfWjO7v%2FNn6kqTIEc%2B0tbPoAzslEM%3D"
+yolo_model_url = "https://assetprojectai.blob.core.windows.net/private/yolov8l.pt?sp=r&st=2024-09-14T08:35:33Z&se=2025-01-15T16:35:33Z&spr=https&sv=2022-11-02&sr=b&sig=DYAJDTcz6fV5%2BU8JtFlJGQ0yJaEDuzPaXkKHZ%2BkhmhU%3D"
+
+# Đường dẫn local để lưu tệp tải về
+local_keras_model_path = 'disease_diagnosis_model_final.keras'
+local_yolo_model_path = 'yolov8l.pt'
+
+# Hàm để tải tệp từ URL
+def download_file_from_url(url, local_path):
+    response = requests.get(url)
+    with open(local_path, 'wb') as file:
+        file.write(response.content)
+
+# Tải mô hình Keras từ Azure Blob Storage
+if not os.path.exists(local_keras_model_path):
+    download_file_from_url(keras_model_url, local_keras_model_path)
+
+# Tải mô hình YOLO từ Azure Blob Storage
+if not os.path.exists(local_yolo_model_path):
+    download_file_from_url(yolo_model_url, local_yolo_model_path)
 
 # Tải mô hình dự đoán từ tệp .keras đã được huấn luyện
-model_path = 'D:/ai-demo/disease_diagnosis_model_final.keras'
-if not os.path.exists(model_path):
-    raise FileNotFoundError(f"Mô hình không tồn tại tại {model_path}")
-
-model = load_model(model_path)
+model = load_model(local_keras_model_path)
 
 # Tải mô hình YOLO mà bạn đã sử dụng trước đây
-yolo_model = YOLO('yolov8l.pt')  # Sử dụng YOLOv8l (Large)
+yolo_model = YOLO(local_yolo_model_path)  # Sử dụng YOLOv8l (Large)
 
-# Tải file JSON chứa tư vấn và đơn thuốc
-with open('D:/ai-demo/advice_and_prescriptions.json', 'r', encoding='utf-8') as f:
-    advice_and_prescriptions = json.load(f)
+# Đường dẫn đến tệp JSON trên GitHub
+json_url = "https://raw.githubusercontent.com/duongdinhthu/ai-python/main/advice_and_prescriptions.json"
+
+# Tải file JSON chứa tư vấn và đơn thuốc từ GitHub
+response = requests.get(json_url)
+advice_and_prescriptions = response.json()
+
+# Khởi tạo ứng dụng Flask
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Augmentation mạnh mẽ
 augmentation = A.Compose([
