@@ -5,3 +5,7 @@ pip install opencv-python
 myenv\Scripts\activate
 python app_yolo.py
 pip freeze > requirements.txt
+  
+
+
+  
